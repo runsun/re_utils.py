@@ -4,89 +4,13 @@
 #  
 #  By Runsun Pan (runsun at gmail dot com) 2016/2
 #  python version: 2.7.11 
+#  (Seems to work fine in 3.6.2)
 #
-#  Run this file directly for doctests:
-'''
-c:\....> python re_utils.py
->>> doctesting: isContainRng()
-====== RE ======
->>> doctesting: _or_items()
->>> doctesting: test_re_or()
->>> doctesting: _1m()
->>> doctesting: _nc_1m()
->>> doctesting: _rep()
->>> doctesting: test_affb()
->>> doctesting: test_RE_ID()
->>> doctesting: test_RE_STR()
->>> doctesting: test_re_pt()
->>> doctesting: test_RE_RANGE()
-====== Token ======
->>> doctesting: ntToken()
->>> doctesting: tokenize()
->>> doctesting: get_rel_rng()
->>> doctesting: re_rng()
->>> doctesting: checkTokenRng()
->>> doctesting: tokenize_str()
->>> doctesting: tokenize_pt()
-====== Token at i ======
->>> doctesting: ntNum_at_i()
->>> doctesting: ntStr_at_i()
->>> doctesting: ntId_at_i()
->>> doctesting: ntLists_at_i()
->>> doctesting: ntPt_at_i()
->>> doctesting: top_ntTuple_at_i()
->>> doctesting: ntCalls_at_i()
->>> doctesting: ntCallArgs_at_i()
-====== Scanning block ======
->>> doctesting: find1stBlk()
->>> doctesting: findAllBlks()
->>> doctesting: findTopBlks()
->>> doctesting: find1stComplex()
->>> doctesting: findTopComplexes()
->>> doctesting: retiring_find1stRoundBlk()
->>> doctesting: find1stModBlk()
->>> doctesting: findTopFuncCalls()
->>> doctesting: tokenizeArg()
->>> doctesting: parseTopApi()
-'''
+#  Run this file directly for doctests
 ######################################
 
 import re, doctest, collections
 
-def isInRng(rng,i):
-  return rng[0]<=i and i<rng[1]
-def isContainRng(rng1,rng2):
-  '''
-  >>> isContainRng( [13,18],[2,9] )
-  False
-
-  >>> isContainRng( [0,3],[2,3] )
-  True
-  
-  '''
-  return (rng1[0]<=rng2[0] and rng2[0]<=rng1[1]
-         and rng1[0]<=rng2[1] and rng2[1]<=rng1[1] )
-  
-def rng_at_i(rngs,i):
-  rtn= [rng for rng in rngs if isInRng(rng, i)]
-  return rtn and list(rtn[0]) or []
-def getStrByRng(s,rng):
-  L = len(s)
-  if rng[0]<L and rng[1] < L and rng[0]<rng[1]:
-    return s[rng[0]:rng[1]]
-  else:
-    raise RangeError('In getTextByRng: rng (%s) out of bound (len s =%s)'%(rng,s))     
-  
-def delSubNts(nts):
-  ''' Keep only the top-level nts'''
-
-  top = []
-  for nt in nts:
-    parent = [ x for x in nts if isContainRng(x.rng, nt.rng) and x!=nt ]
-    if not parent:
-      top.append(nt)
-  return top
-        
 #. re func : c, nc
 def _c(txt): return r'('+txt+r')'     ## captured group
 def _nc(txt): return r'(?:'+txt+r')'  ## non-captured group
@@ -430,14 +354,7 @@ def ntToken(tkname, typ, rng, rel_rng, txt ):
   '''
   return collections.namedtuple( tkname,
           ['typ','rng','rel_rng','txt'])( typ, rng, rel_rng, txt )
-
-def ntApi( typ, name, rng, rel_rng, txt, argtxt, argnames, reqargs, optargs):
-  return collections.namedtuple( 'api',
-          ['typ', 'name','rng','rel_rng','txt'
-          ,'argtxt', 'argnames', 'reqargs','optargs' ])( 
-              typ, name, rng, rel_rng, txt, argtxt, argnames, reqargs, optargs
-          ) 
-
+ 
 def tokenize (s, rules, isAutoSkip=True): 
     r'''   
      
@@ -460,10 +377,7 @@ def tokenize (s, rules, isAutoSkip=True):
           If any is not handle, error will occur. This is 
           avoided by adding a 'SKIP' item to rule. 
         
-          If isAutoSkip, this SKIP will be added automatically.
-          That means, with isAutoSkip, you don't need to worry
-          about having to cover all elements. 
-          
+          If isAutoSkip, this SKIP will be added automatically
     --------------------------------------------------
     NOTE:
     
@@ -830,29 +744,15 @@ def token_at_i(nt_tokens, i):
       
 def tokenize_num( s ):
   g_nt = tokenize( s, ( ('NUM', RE_NUM), ))
-  return g_nt and list(g_nt) or []
+  return g_nt and list(g_nt) or None
 
 def tokenize_str( s ):
-  '''
- 
-    >>> s = 'func(")");'        
-    >>> ntStrs= tokenize_str(s)
-    >>> ntStrs
-    [Token(typ='STR', rng=(5, 8), rel_rng=(0, 5, 0, 8), txt='")"')]
-      
-    #    012345678901234
-    >>> s = 'func( ")" );'  
-    >>> ntStrs= tokenize_str(s)
-    >>> ntStrs
-    [Token(typ='STR', rng=(6, 9), rel_rng=(0, 6, 0, 9), txt='")"')]
-      
-  '''
   g_nt = tokenize( s, ( ('STR', RE_STR), ))
-  return g_nt and list(g_nt) or []
+  return g_nt and list(g_nt) or None
 
 def tokenize_id( s ):
   g_nt = tokenize( s, ( ('ID', RE_ID), ))
-  return g_nt and list(g_nt) or []
+  return g_nt and list(g_nt) or None
   
 def tokenize_pt( s, dim=3):
   '''
@@ -868,7 +768,7 @@ def tokenize_pt( s, dim=3):
         
   '''
   g_nt = tokenize( s, ( ('PT', dim==3 and RE_PT3D or RE_PT2D ),) )
-  return g_nt and list(g_nt) or []
+  return g_nt and list(g_nt) or None
   
 ## keep this line here to ensure sectioning
     
@@ -877,39 +777,24 @@ def tokenize_pt( s, dim=3):
 """
 python re.Scanner examples:
 
-http://lucumr.pocoo.org/2015/11/18/pythons-hidden-re-gems/
 https://docs.python.org/3.2/library/re.html#writing-a-tokenizer
 http://www.programcreek.com/python/example/53972/re.Scanner
 http://stackoverflow.com/questions/691148/pythonic-way-to-implement-a-tokenizer?lq=1
 http://stackoverflow.com/questions/19280898/re-scanner-only-searching-start-of-string
-
 """
-def find1stBlk_try( text, name='{}', ends=("\{","\}"), skip_ends=None
+
+                     
+def find1stBlk( text, name='{}', ends=("\{","\}")
 
               , _i=0
               , _iblkbegs=[]
               , _pbeg=None
               , _pend=None
-              , _skip_rng=None # [(2,3), (5,10) ]
               , _ntblk=None):
     r''' 
     Find the 1st-matched TOP level of a block defined by ends, where ends 
     = (bbeg, bend) in that both are valid string for re pattern. 
     Return a ntToken. 
-    
-    Note: this func takes care of :
-      
-       find1stBlk('b=[a,[2,3]]', ends=('\[','\]') ) => find '[a,[2,3]]' 
-       find1stBlk('a= func(g(i))', ends=('\(','\)') ) => find '(g(i))' 
-       find1stBlk('a= func(g(i))', ends=(RE_ID+'\(','\)') ) => 'func(g(i))'
-       find1stBlk('a= func(g(")"))', ends=(RE_ID+'\(','\)') ) => 'func(g(")"))'
-    
-    But NOT:
-    
-       find1stBlk('b=func(a=(2,3))', ends=(RE_ID+'\(','\)') ) 
-        => expect 'func(a=(2,3))', got 'func(a=(2,3)'  
-           
-    So, be sure to make ends[1] unique.    
     
              012345678901234 
     >>> s = 'func( g(i) );'    
@@ -960,49 +845,7 @@ def find1stBlk_try( text, name='{}', ends=("\{","\}"), skip_ends=None
     >>> checkTokenRng( s5, blk )
     False
     
-    ----------------------
-    2016.3.8:
-
-    >>> s = 'func( ")" );'    
-    >>> blk= find1stBlk( s, name='()', ends=('\(', '\)') )
-    >>> blk 
-    Blk(typ='()', rng=(4, 11), rel_rng=(0, 4, 0, 11), txt='( ")" )')
-    
-    >>> s = 'func( "(...)" );'    
-    >>> blk= find1stBlk( s, name='()', ends=('\(', '\)') )
-    >>> blk 
-    Blk(typ='()', rng=(4, 15), rel_rng=(0, 4, 0, 15), txt='( "(...)" )')
-    
-    >>> s = 'b=func(g(a));'    
-    >>> blk= find1stBlk( s, name='()', ends=(RE_ID+'\(', '\)') )
-    >>> blk 
-    Blk(typ='()', rng=(2, 12), rel_rng=(0, 2, 0, 12), txt='func(g(a))')
-    
-    >>> s = 'b=func(g(")"));'    
-    >>> blk= find1stBlk( s, name='()', ends=(RE_ID+'\(', '\)') )
-    >>> blk 
-    Blk(typ='()', rng=(2, 14), rel_rng=(0, 2, 0, 14), txt='func(g(")"))')
-    
-    >>> s = 'b=func(a=(2,3));'    ### FAILED TO CATCH RIGHT ONE
-    >>> blk= find1stBlk( s, name='()', ends=(RE_ID+'\(', '\)'), skip_ends=('\(','\)') )
-    >>> blk 
-    Blk(typ='()', rng=(2, 14), rel_rng=(0, 2, 0, 14), txt='func(a=(2,3))')
-    
-            0123456789012345678901234567890123456789012345678901234567890123456789    
-    >>> s5='a=3; module mod(a,b=2,c=g(d),d=g(2,3)){...} function func(x=g(2))=...'
-    >>> ntblk = find1stBlk(s5, 
-    ...   ends=( 'module' + _1ms()+ RE_ID+_0ms()+'\(', '\)'+_0ms()+'\{'))
-
-    >>> ntblk   # Why the "{" not included in the result ??? 
-    Blk(typ='{}', rng=(5, 39), rel_rng=(0, 5, 0, 39), txt='module mod(a,b=2,c=g(d),d=g(2,3)){')
-        
-    >>> getStrByRng(s5, ntblk.rng)  
-    'module mod(a,b=2,c=g(d),d=g(2,3)){'
-    
-        
-    
     '''
-    print('Enter find1stBlk, text="%s"'%text)
     #    print( 'ends = "%s"'%str(ends) )             
     #    return    
 
@@ -1015,231 +858,17 @@ def find1stBlk_try( text, name='{}', ends=("\{","\}"), skip_ends=None
       
         _iblkbegs=[] ## Required to re-set it to []. Weird. It's 
                      ## supposed to be local, shouldn't be influenced
-                     ## by previous run. But, it seems to be. 
-        #print( 'ends = "%s"'%str(ends) ) 
-        _pbeg = re.compile( ends[0] )
-        _pend = re.compile( ends[1] ) 
-      
-      ptext = text[_i:]
-      
-      mbeg = _pbeg.match( ptext )
-       
-      if mbeg:
-        
-        _iblkbegs.append(_i)
-        #print('   bbeg found, i=%s, _iblkbegs=%s'%(_i, str(_iblkbegs)))
-        _i=_i+ len(mbeg.group()) 
-           
-      else:
-      
-        mend =_pend.match(ptext)
-        
-        if mend:
-          #print('   bbend found, i=%s, _iblkbegs=%s'%(_i, str(_iblkbegs)))
-          L = len(mend.group())
-          
-          if len(_iblkbegs)==1: #_iblkbegs!=None:
-
-            rng= (_iblkbegs[0], _i+L)
-            txt = text[_iblkbegs[0]:_i+L]
-            print('txt = "%s"'%txt)
-            has_skip_ends=None
-            
-            if skip_ends:
-              has_skip_ends = find1stBlk( txt, name='unwanted', ends=skip_ends)
-            
-            print( 'skip_ends = %s, has_skip_ends = %s'%(skip_ends, has_skip_ends))
-            if not has_skip_ends or has.skip.ends.rng[1]+rng[0]!= rng[1]:  
-              _ntblk = ntToken( 'Blk', typ=name
-                              , rng = rng
-                              , rel_rng = get_rel_rng( text, rng )
-                              , txt = txt
-                              )             
-          elif _iblkbegs:
-            _iblkbegs.pop()
-                                     
-          _i=_i+ L #len(mend.group()) 
- 
-        else:
-          m= re.compile(RE_STR).match( text[_i:] )
-          if m: _i= _i+len(m.group())
-          else: _i= _i+1 
-        
-      ## NOTE: arg *ends* are used to generate re pattern at _i=0
-      ##      (_pbeg and _pend). After then they are not needed.  
-      return find1stBlk( text, name=name, skip_ends= skip_ends
-             , _i=_i, _pbeg=_pbeg, _pend=_pend
-             ,_iblkbegs=_iblkbegs, _ntblk=_ntblk
-             )    
-
-#s = 'b=func"("a=(2,3));'    ### FAILED TO CATCH RIGHT ONE
-#blk= find1stBlk( s, name='()', ends=(RE_ID+'\(', '\)'), skip_ends=(r'\(',r'\)') )
-#print('blk= ',blk)
-    
-#s2 = 'func( g(i) );'        
-#blk= find1stBlk( s2, name='fname', ends=(RE_ID+'\(', '\)') )
-#print('blk= ',blk)
-
-##     012345678901234
-#s2 = 'func(")");'        
-#blk= find1stBlk( s2, name='fname', ends=(RE_ID+'\(', '\)') )
-#print('blk= ',blk)
-##    012345678901234
-#print
-#s = 'func( ")" );'    
-#blk= find1stBlk( s, name='()', ends=('\(', '\)') )
-#print('blk= ',blk)
- 
-#   0123456789 123456789 123456789 123456789 123456789 1234567890123456789    
-#s5='a=3; module mod(a,b=2,c=g(d),d=g(2,3)){...} function func(x=g(2))=...'
-#ntblk = find1stBlk(s5, 
-#   ends=( _or('module','function') + _1ms()+ RE_ID+_0ms()+'\(', '\)'))
-#print('ntblk = ', ntblk)
-                        
-def find1stBlk( text, name='{}', ends=("\{","\}"), skip_ends=None
-
-              , _i=0
-              , _iblkbegs=[]
-              , _pbeg=None
-              , _pend=None
-              , _ntblk=None):
-    r''' 
-    Find the 1st-matched TOP level of a block defined by ends, where ends 
-    = (bbeg, bend) in that both are valid string for re pattern. 
-    Return a ntToken. 
-    
-    Note: this func takes care of :
-      
-       find1stBlk('b=[a,[2,3]]', ends=('\[','\]') ) => find '[a,[2,3]]' 
-       find1stBlk('a= func(g(i))', ends=('\(','\)') ) => find '(g(i))' 
-       find1stBlk('a= func(g(i))', ends=(RE_ID+'\(','\)') ) => 'func(g(i))'
-       find1stBlk('a= func(g(")"))', ends=(RE_ID+'\(','\)') ) => 'func(g(")"))'
-    
-    But NOT:
-    
-       find1stBlk('b=func(a=(2,3))', ends=(RE_ID+'\(','\)') ) 
-        => expect 'func(a=(2,3))', got 'func(a=(2,3)'  
-           
-    So, be sure to make ends[1] unique.    
-    
-             012345678901234 
-    >>> s = 'func( g(i) );'    
-    
-    >>> blk= find1stBlk( s, name='()', ends=('\(', '\)') )
-    >>> blk
-    Blk(typ='()', rng=(4, 12), rel_rng=(0, 4, 0, 12), txt='( g(i) )')
-    >>> checkTokenRng( s, blk )
-    True
-    
-    >>> blk= find1stBlk( s, name='fname', ends=(RE_ID+'\(', '\)') )
-    >>> blk
-    Blk(typ='fname', rng=(0, 12), rel_rng=(0, 0, 0, 12), txt='func( g(i) )')
-    >>> checkTokenRng( s, blk )
-    True
-    
-              012345678901234
-    >>> s2 = 'func(")");'        
-    >>> blk= find1stBlk( s2, name='fname', ends=(RE_ID+'\(', '\)') )
-    >>> blk
-    Blk(typ='fname', rng=(0, 9), rel_rng=(0, 0, 0, 9), txt='func(")")')
-    >>> checkTokenRng( s2, blk )
-    True
-    
-              012345678901234567
-    >>> s3 = 'a="("; func(")");'        
-    >>> blk= find1stBlk( s3, name='fname', ends=(RE_ID+'\(', '\)') )
-    >>> blk
-    Blk(typ='fname', rng=(7, 16), rel_rng=(0, 7, 0, 16), txt='func(")")')
-    >>> checkTokenRng( s3, blk )
-    True
-         
-                012345678901234 
-    >>> s4 = """func( 
-    ... g(i) 
-    ... );"""
-    
-    >>> ntBlk= find1stBlk( s4, name='()', ends=('\(', '\)') ) 
-    >>> ntBlk
-    Blk(typ='()', rng=(4, 14), rel_rng=(0, 4, 2, 1), txt='( \ng(i) \n)')
-    >>> checkTokenRng( s4, ntBlk )
-    True
-    
-    >>> s5 = "abcdefghijkl"
-    >>> blk= find1stBlk( s5 )   # found nothing
-    >>> blk
-    
-    >>> checkTokenRng( s5, blk )
-    False
-    
-    ----------------------
-    2016.3.8:
-
-    >>> s = 'func( ")" );'    
-    >>> blk= find1stBlk( s, name='()', ends=('\(', '\)') )
-    >>> blk 
-    Blk(typ='()', rng=(4, 11), rel_rng=(0, 4, 0, 11), txt='( ")" )')
-    
-    >>> s = 'func( "(...)" );'    
-    >>> blk= find1stBlk( s, name='()', ends=('\(', '\)') )
-    >>> blk 
-    Blk(typ='()', rng=(4, 15), rel_rng=(0, 4, 0, 15), txt='( "(...)" )')
-    
-    >>> s = 'b=func(g(a));'    
-    >>> blk= find1stBlk( s, name='()', ends=(RE_ID+'\(', '\)') )
-    >>> blk 
-    Blk(typ='()', rng=(2, 12), rel_rng=(0, 2, 0, 12), txt='func(g(a))')
-    
-    >>> s = 'b=func(g(")"));'    
-    >>> blk= find1stBlk( s, name='()', ends=(RE_ID+'\(', '\)') )
-    >>> blk 
-    Blk(typ='()', rng=(2, 14), rel_rng=(0, 2, 0, 14), txt='func(g(")"))')
-    
-    >>> s = 'b=func(a=(2,3));'    ### FAILED TO CATCH RIGHT ONE
-    >>> blk= find1stBlk( s, name='()', ends=(RE_ID+'\(', '\)'), skip_ends= ('\(', '\)'))
-    >>> blk 
-    Blk(typ='()', rng=(2, 15), rel_rng=(0, 2, 0, 15), txt='func(a=(2,3))')
-    
-            0123456789012345678901234567890123456789012345678901234567890123456789    
-    >>> s5='a=3; module mod(a,b=2,c=g(d),d=g(2,3)){...} function func(x=g(2))=...'
-    >>> ntblk = find1stBlk(s5, 
-    ...   ends=( 'module' + _1ms()+ RE_ID+_0ms()+'\(', '\)'+_0ms()+'\{'))
-
-    >>> ntblk    
-    Blk(typ='{}', rng=(5, 39), rel_rng=(0, 5, 0, 39), txt='module mod(a,b=2,c=g(d),d=g(2,3)){')
-        
-    >>> getStrByRng(s5, ntblk.rng)  
-    'module mod(a,b=2,c=g(d),d=g(2,3)){'
-    
-        
-    
-    '''
-    
-    rtn = findAllBlks( text, name=name, ends=ends, skip_ends=skip_ends )
-    return rtn and rtn[0] or None
-    
-    #    print( 'ends = "%s"'%str(ends) )             
-    #    return    
-
-    if _i>=len(text) or _ntblk:
-      #print('Leaving find1stBlk, _ntblk= ', _ntblk)
-      return _ntblk    
-    else:
-    
-      if _i==0: 
-      
-        _iblkbegs=[] ## Required to re-set it to []. Weird. It's 
-                     ## supposed to be local, shouldn't be influenced
-                     ## by previous run. But, it seems to be. 
-        #print( 'ends = "%s"'%str(ends) ) 
+                     ## but previous run. But, it seems to be. 
+        #print( 'ends = "%s"'%str(ends) )             
         _pbeg = re.compile( ends[0] )
         _pend = re.compile( ends[1] )                              
       
       ptext = text[_i:]
       
-      mbeg = _pbeg.match( ptext )
+      mbeg = _pbeg.match(ptext)
        
-      if mbeg:
-        
+      if mbeg:  
+       
         _iblkbegs.append(_i)
         #print('   bbeg found, i=%s, _iblkbegs=%s'%(_i, str(_iblkbegs)))
         _i=_i+ len(mbeg.group()) 
@@ -1258,7 +887,7 @@ def find1stBlk( text, name='{}', ends=("\{","\}"), skip_ends=None
             _ntblk = ntToken( 'Blk', typ=name
                             , rng = rng
                             , rel_rng = get_rel_rng( text, rng )
-                            , txt = text[_iblkbegs[0]:_i+L]
+                            , txt = text[_iblkbegs[0]:_i+1]
                             )             
           elif _iblkbegs:
             _iblkbegs.pop()
@@ -1277,261 +906,7 @@ def find1stBlk( text, name='{}', ends=("\{","\}"), skip_ends=None
              ,_iblkbegs=_iblkbegs, _ntblk=_ntblk
              )    
 
-def findAllBlks( text, name='{}', ends=("\{","\}"), skip_ends=None
-
-              , _i=0
-              , _iblkbegs=[]
-              , _iskipblkbegs=[]
-              , _pbeg=None
-              , _pend=None
-              , _pskipbeg=None
-              , _pskipend=None
-              , _ntblks=[]):
-    r''' 
-    Find all blks, including nested oncs, defined by ends, where ends 
-    = (bbeg, bend) in that both are valid string for re pattern. 
-    Return a list of ntTokens. In case of nested blks, the ntToken.rng
-    will overlap:
-    
-      [ (... rng(4, 12)....)
-      , (....rng(7, 10) ...)
-      ]
-    
-    skip_ends (new 3/15/2016): to deal with unwanted sub-blocks. For example,
-    to match a func call using ends=(RE_ID+'\(', '\)'):
-    
-       0123456789 12345678
-      "a= func( b=(2,3) )"
-      
-    the ")" in i=15 will cause an early close and result in : "func( b=(2,3)"
-    
-    In cases like this, we set skip_ends =('\(', '\)') to skip the sub-block.
-      
-        
-             012345678901234 
-    >>> s = 'func( g(i) );'    
-    
-    >>> blks= findAllBlks( s, name='()', ends=('\(', '\)') )
-    >>> blks    # doctest: +NORMALIZE_WHITESPACE
-    [Blk(typ='()', rng=(4, 12), rel_rng=(0, 4, 0, 12), txt='( g(i) )'), 
-     Blk(typ='()', rng=(7, 10), rel_rng=(0, 7, 0, 10), txt='(i)')]   
-    
-    >>> [ checkTokenRng(s, blk) for blk in blks ]
-    [True, True]
-      
-             012345678901234567890123456 
-    >>> s2= 'pts= [ [2,3,4],[5,6,7] ]'
-    >>> blks= findAllBlks( s2, name='[]', ends=('\[', '\]') )
-    >>> blks    # doctest: +NORMALIZE_WHITESPACE
-    [Blk(typ='[]', rng=(5, 24), rel_rng=(0, 5, 0, 24), txt='[ [2,3,4],[5,6,7] ]'), 
-    Blk(typ='[]', rng=(7, 14), rel_rng=(0, 7, 0, 14), txt='[2,3,4]'), 
-    Blk(typ='[]', rng=(15, 22), rel_rng=(0, 15, 0, 22), txt='[5,6,7]')]
-        
-    >>> [ checkTokenRng(s2, blk) for blk in blks ]
-    [True, True, True]
-    
-    3/14/2016:
-    
-    >>> s = 'func( g(")") );'    
-    >>> blks= findAllBlks( s, name='()', ends=('\(', '\)') )
-    >>> blks    # doctest: +NORMALIZE_WHITESPACE
-    [Blk(typ='()', rng=(4, 14), rel_rng=(0, 4, 0, 14), txt='( g(")") )'), 
-     Blk(typ='()', rng=(7, 12), rel_rng=(0, 7, 0, 12), txt='(")")')]
-
-    >>> s = 'func( g("(...)") );'    
-    >>> blks= findAllBlks( s, name='()', ends=('\(', '\)') )
-    >>> blks    # doctest: +NORMALIZE_WHITESPACE
-    [Blk(typ='()', rng=(4, 18), rel_rng=(0, 4, 0, 18), txt='( g("(...)") )'), 
-     Blk(typ='()', rng=(7, 16), rel_rng=(0, 7, 0, 16), txt='("(...)")')]
-        
-    >>> [ checkTokenRng(s, blk) for blk in blks ]
-    [True, True]
-    
-    Unclosed block :
-    
-    >>> s = 'func( g(3)'    
-    >>> blks= findAllBlks( s, name='()', ends=('\(', '\)') )
-    >>> blks    # doctest: +NORMALIZE_WHITESPACE
-    [Blk(typ='()', rng=(7, 10), rel_rng=(0, 7, 0, 10), txt='(3)')]
-            
-    >>> [ checkTokenRng(s, blk) for blk in blks ]
-    [True]
-
-    block containing unwanted sub-blocks:  (New 3/15/2016)
-    
-    >>> s = 'func( a=(2,3) );'    
-    >>> blks= findAllBlks( s, name='()', ends=(RE_ID+'\(', '\)'), skip_ends=('\(', '\)'))
-    >>> blks    # doctest: +NORMALIZE_WHITESPACE
-    [Blk(typ='()', rng=(0, 15), rel_rng=(0, 0, 0, 15), txt='func( a=(2,3) )')]    
-
-    >>> s = 'func( a );'    
-    >>> blks= findAllBlks( s, name='()', ends=(RE_ID+'\(', '\)'), skip_ends=('\(', '\)'))
-    >>> blks    # doctest: +NORMALIZE_WHITESPACE
-    [Blk(typ='()', rng=(0, 9), rel_rng=(0, 0, 0, 9), txt='func( a )')]    
-        
-    2016.3.15: 
-    
-    >>> s2= '3,[1,3,5],g([3,4]),"str", c=f(4),d="str2"'
-    >>> ASSIGN = RE_ID+_0ms()+'=' +_0ms()
-    >>> blks= findAllBlks( s2, name='Assign_fcall'
-    ...   , ends=( ASSIGN+RE_ID+_0ms()+'\(', '\)'), skip_ends= ('\(', '\)') )
-    >>> blks
-    [Blk(typ='Assign_fcall', rng=(26, 32), rel_rng=(0, 26, 0, 32), txt='c=f(4)')]
-       
-    
-    2016.3.16:
-    
-           #0123456789 123456789 123 
-    >>> s= "a=3,b=4,c=f(4),d=[2,3,4]"
-    >>> ASSIGN = RE_ID+_0ms()+'=' +_0ms()
-    >>> blks= findAllBlks( s, name='Assign_fcall', 
-    ...    ends=( ASSIGN+RE_ID+_0ms()+'\(', '\)'), skip_ends= ('\(', '\)') )
-    >>> blks
-    [Blk(typ='Assign_fcall', rng=(8, 14), rel_rng=(0, 8, 0, 14), txt='c=f(4)')]
-    
-    2016.3.22:
-    
-    >>> s= "function f(a,b)=...; module mod(c,d=3){ ...}; function func(e,f)=...;"
-    >>> ends= ('function'+ _0ms() + RE_ID+ _0ms()+'\(', '\)'+_0ms()+'\=')
-    >>> funcs= findAllBlks( s, name='fcall', 
-    ...    ends=ends, skip_ends= ('\(', '\)') )
-    >>> funcs    # doctest: +NORMALIZE_WHITESPACE
-    [Blk(typ='fcall', rng=(0, 16), rel_rng=(0, 0, 0, 16), txt='function f(a,b)='), 
-     Blk(typ='fcall', rng=(46, 65), rel_rng=(0, 46, 0, 65), txt='function func(e,f)=')] 
-    
-    >>> ends= ('module'+ _0ms() + RE_ID+ _0ms()+'\(', '\)'+_0ms()+'\{')
-    >>> mods= findAllBlks( s, name='modcall', 
-    ...    ends=ends, skip_ends= ('\(', '\)') )
-    >>> mods    # doctest: +NORMALIZE_WHITESPACE
-    [Blk(typ='modcall', rng=(21, 39), rel_rng=(0, 21, 0, 39), txt='module mod(c,d=3){')]
-                 
-    '''
-    #    print( 'ends = "%s"'%str(ends) )             
-    #    return    
-    #print('\nEnter findAllBlks ########, _i=%s, _iblkbegs=%s, _iskipblkbegs=%s, len _ntblks=%s'%(_i, str(_iblkbegs), str(_iskipblkbegs), len(_ntblks)))
-    
-    if _i>=len(text) :
-      #print('Leaving find1stBlk, _ntblks= ', _ntblks)
-      return _ntblks.sort() or _ntblks    
-    else:
-    
-      if _i==0: 
-        _ntblks = []
-        _iblkbegs=[] ## Required to re-set it to []. Weird. It's 
-                     ## supposed to be local, shouldn't be influenced
-                     ## but previous run. But, it seems to be.
-                     ## NOTE: This seems to be happening only in doctest 
-        #print( 'ends = "%s"'%str(ends) )
-        _iskipblkbegs=[] 
-                     
-        _pbeg = re.compile( ends[0] )
-        _pend = re.compile( ends[1] ) 
-        if skip_ends:                             
-          _pskipbeg = re.compile( skip_ends[0] )
-          _pskipend = re.compile( skip_ends[1] )                              
-      
-      ptext = text[_i:]
-      
-      mbeg = _pbeg.match(ptext)
-      mskipbeg = None
-      mskipend = None
-      if _pskipbeg:
-        mskipbeg = _pskipbeg.match(ptext)
-        mskipend = _pskipend.match(ptext)
-        #print( '  mskipbeg = %s'%mskipbeg )
-       
-      if mbeg:  
-       
-        _iblkbegs.append(_i)
-        #print('   bbeg found, i=%s, _iblkbegs=%s'%(_i, str(_iblkbegs)))
-        _i=_i+ len(mbeg.group()) 
-      
-      elif mskipbeg:  
-
-        #print('   bskipbeg found, i=%s, _iskipblkbegs=%s'%(_i, str(_iskipblkbegs)))
-       
-        _iskipblkbegs.append(_i)
-        #print('   bbeg found, i=%s, _iblkbegs=%s'%(_i, str(_iblkbegs)))
-        _i=_i+ len(mskipbeg.group()) 
-           
-      else:
-      
-        #print('   No beg matched')
-        
-        mend =_pend.match(ptext)
-        
-        if mend:
-          L = len(mend.group())
-          #print('   bbend found, i=%s, _iblkbegs=%s, _iskipblkbegs=%s'%(_i, str(_iblkbegs), str(_iskipblkbegs)))
-          if mskipend and (_iblkbegs and _iskipblkbegs and 
-                _iskipblkbegs[-1] > _iblkbegs[-1]
-                and ends[1]==skip_ends[1] ):    
-            # Deal with when matching the right end of both ends and skip_ends
-            #  
-            # func(a=(3,4))
-#            if (_iblkbegs and _iskipblkbegs and 
-#                _iskipblkbegs[-1] > _iblkbegs[-1]
-#                and ends[1]==skip_ends[1] ):        
-               _iskipblkbegs.pop()
-               _i = _i+ L 
-          
-          elif _iblkbegs: #_iblkbegs!=None:
-          
-            ibeg= _iblkbegs.pop()
-            rng= ( ibeg, _i+L)
-            _ntblk = ntToken( 'Blk', typ=name
-                            , rng = rng
-                            , rel_rng = get_rel_rng( text, rng )
-                            , txt = text[ibeg:_i+L]
-                            )             
-            _ntblks.append( _ntblk )
-                                     
-            _i=_i+ L 
-          else:
-            _i= _i+1  
- 
-        elif mskipend:   
-            #print('   bskipbend found, i=%s, _iblkbegs=%s, _iskipblkbegs=%s'%(_i, str(_iblkbegs), str(_iskipblkbegs)))        
-            _iskipblkbegs.pop()
-            _i = _i+ len(mskipend.group()) 
-        
-        else:
-          #print( '  No match')
-          m= re.compile(RE_STR).match( text[_i:] )
-          L = m and len(m.group()) or 1
-          _i= _i+L 
-          #print( '  Nothing matched, _i advances to %s'%_i)
-        
-      return findAllBlks( text, name=name, ends=ends, skip_ends=skip_ends
-             , _i=_i
-             , _pbeg=_pbeg, _pend=_pend
-             , _iblkbegs=_iblkbegs
-             , _pskipbeg=_pskipbeg, _pskipend=_pskipend
-             , _iskipblkbegs=_iskipblkbegs
-             , _ntblks=_ntblks
-             )
-  
-   #0123456789 123456789 123456789 123456789 123456789 
-#s= "a=3,b=4,c=f(4),d=[2,3,4]"
-#ASSIGN = RE_ID+_0ms()+'=' +_0ms()
-#blks= findAllBlks( s, name='Assign_fcall'
-#   , ends=( ASSIGN+RE_ID+_0ms()+'\(', '\)'), skip_ends= ('\(', '\)') )
-#print('blks = %s'%( blks))
-                
-    #0123456789 123456789 123456789 123456789 123456789 
-#s2= '3,[1,3,5],g([3,4]),"str", c=f(4),d="str2"'
-#ASSIGN = RE_ID+_0ms()+'=' +_0ms()
-#blks= findAllBlks( s2, name='Assign_fcall'
-#       , ends=( ASSIGN+RE_ID+_0ms()+'\(', '\)'), skip_ends= ('\(', '\)') )
-#print('blks = %s'%( blks))
-             
-#    #0123456789 1234567            
-#s = 'func( a=(2,3) );'    
-#blks= findAllBlks( s, name='()', ends=(RE_ID+'\(', '\)'), skip_ends=('\(', '\)') )
-#print('blks = %s'%( blks))
-    
-    
-def findAllBlks_bk( text, name='{}', ends=("\{","\}")
+def findAllBlks( text, name='{}', ends=("\{","\}")
 
               , _i=0
               , _iblkbegs=[]
@@ -1569,30 +944,6 @@ def findAllBlks_bk( text, name='{}', ends=("\{","\}")
         
     >>> [ checkTokenRng(s2, blk) for blk in blks ]
     [True, True, True]
-    
-    3/14/2016:
-    
-    >>> s = 'func( g(")") );'    
-    >>> blks= findAllBlks( s, name='()', ends=('\(', '\)') )
-    >>> blks    # doctest: +NORMALIZE_WHITESPACE
-    [Blk(typ='()', rng=(4, 14), rel_rng=(0, 4, 0, 14), txt='( g(")") )'), 
-     Blk(typ='()', rng=(7, 12), rel_rng=(0, 7, 0, 12), txt='(")")')]
-
-    >>> s = 'func( g("(...)") );'    
-    >>> blks= findAllBlks( s, name='()', ends=('\(', '\)') )
-    >>> blks    # doctest: +NORMALIZE_WHITESPACE
-    [Blk(typ='()', rng=(4, 18), rel_rng=(0, 4, 0, 18), txt='( g("(...)") )'), 
-     Blk(typ='()', rng=(7, 16), rel_rng=(0, 7, 0, 16), txt='("(...)")')]
-        
-    >>> [ checkTokenRng(s, blk) for blk in blks ]
-    [True, True]
-
-    >>> s = 'func( a=(2,3) );'    
-    >>> blks= findAllBlks( s, name='()', ends=(RE_ID+'\(', '\)') )
-    >>> blks    # doctest: +NORMALIZE_WHITESPACE
-    [Blk(typ='()', rng=(4, 14), rel_rng=(0, 4, 0, 14), txt='( g(")") )'), 
-     Blk(typ='()', rng=(7, 12), rel_rng=(0, 7, 0, 12), txt='(")")')]
-    
     
     '''
     #    print( 'ends = "%s"'%str(ends) )             
@@ -1656,7 +1007,7 @@ def findAllBlks_bk( text, name='{}', ends=("\{","\}")
              ,_iblkbegs=_iblkbegs, _ntblks=_ntblks
              )    
 
-def findTopBlks( text, name='{}', ends=("\{","\}"), skip_ends=None
+def findTopBlks( text, name='{}', ends=("\{","\}")
             , _i=0, _rtn=[] ):
   '''
     Return a list containing all ntToken as top-level blocks
@@ -1669,7 +1020,7 @@ def findTopBlks( text, name='{}', ends=("\{","\}"), skip_ends=None
      Blk(typ='[]', rng=(13, 18), rel_rng=(0, 13, 0, 18), txt='[5,6]')] 
     >>> [ checkTokenRng(s, x) for x in blks ]
     [True, True]
-            
+  
     >>> s2 = """a=[2,[3,4]]; b=[[5,6],"]"];"""
     >>> blks= findTopBlks(s2, '[]', ends=('\[','\]'))
     >>> blks        # doctest: +NORMALIZE_WHITESPACE
@@ -1679,39 +1030,24 @@ def findTopBlks( text, name='{}', ends=("\{","\}"), skip_ends=None
     [True, True]
     
   '''
-  #print( '\nEnter findTopBlks')
-  rtn = findAllBlks( text, name=name, ends=ends, skip_ends=skip_ends )
-  return delSubNts(rtn)
-#  top = []
-#  for nt in rtn:
-#    parent = [ x for x in rtn if isContainRng(x.rng, nt.rng) and x!=nt ]
-#    if not parent:
-#      top.append(nt)
-#  return top and top or None
-   
-#  if _i>=len(text):
-#    #print('Leaving find1stBlk, _ntblk= ', _ntblk)
-#    return _rtn
-#        
-#  else:
-#    if _i==0: _rtn=[]
-#    
-#    nt = find1stBlk( text[_i:], name=name, ends=ends )
-#    if nt:
-#      nt = re_rng( text, nt, _i )            
-#      _rtn.append( nt )
-#      _i =nt.rng[1] 
-#    else:
-#      _i = _i +1
-#         
-#    return findTopBlks( text, name=name, ends=ends, _i=_i, _rtn=_rtn )              
-  
-def findTopTuples( s ):
-  '''
-    Return a list of ntToken each representing a top-level tuple
-  '''
-  return findTopBlks( s, name='Tuple', ends=("\(","\)"))
+  if _i>=len(text):
+    #print('Leaving find1stBlk, _ntblk= ', _ntblk)
+    return _rtn
+        
+  else:
+    if _i==0: _rtn=[]
     
+    nt = find1stBlk( text[_i:], name=name, ends=ends )
+    if nt:
+      nt = re_rng( text, nt, _i )            
+      _rtn.append( nt )
+      _i =nt.rng[1] 
+    else:
+      _i = _i +1
+         
+    return findTopBlks( text, name=name, ends=ends, _i=_i, _rtn=_rtn )              
+  
+  
 def find1stComplex(text, name, rules
 
                    , _i=0 
@@ -1720,12 +1056,6 @@ def find1stComplex(text, name, rules
                    ):
   r'''
   
-    Note: this might not needed. Finding a complex with 
-      rules = (rule1, rule2)
-    can seem to be completed using findAllBlks with 
-      rule = rule1 + _0ms()+rule2  
-    
-    ----------------------------------------------------
     Find the 1st continuously connected patterns, return (blk, items)
     where items is a list of ntTokens corresponding to each rules,
     and blk is a ntToken of all items combined.
@@ -2017,11 +1347,11 @@ def find1stCurlyBlk(text):
 def find1stSqBlk(text):
   return find1stBlk(text, name='[]', ends=("\[", "\]"))
 
-def retiring_find1stRoundBlk(text):
+def find1stRoundBlk(text):
   '''
            012345678901234567890123456789012 
     >>> s='a=3; move([(2,3),4])  { a=3; }; '
-    >>> cblk = retiring_find1stRoundBlk( s)
+    >>> cblk = find1stRoundBlk( s)
     >>> cblk 
     Blk(typ='()', rng=(9, 20), rel_rng=(0, 9, 0, 20), txt='([(2,3),4])')
     
@@ -2031,50 +1361,10 @@ def retiring_find1stRoundBlk(text):
     
   return find1stBlk(text, name='()', ends=("\(", "\)"))
   
-def retiring_find1stFuncCall(text):
-  ''' 
-    This might not be so useful, 'cos what we interested in is 
-    where the current caret position is in a func call, which is
-    handled by ntCalls_at_i. 
-  '''
+def find1stFuncCall(text):
   return find1stComplex( text, name='funcCall'
           , rules= ( RE_ID, ("\(", "\)") ) )
-  
-def findTopFuncCalls(text
-                    ,_i=0, _rtn=[]):
-
-#def findTopBlks( text, name='{}', ends=("\{","\}")
-#            , _i=0, _rtn=[] ):
-  '''
-    This might not be so useful, 'cos what we interested in is 
-    where the current caret position is in a func call, which is
-    handled by ntCalls_at_i.
-    
-    BUT... this is needed in tokenizeArg. 
-        
-    Return a list containing all ntToken as top-level func call blocks.
-               012345678901234567890123
-    >>> s = """a= f(a,3); b= g( h(3));"""
-    
-    >>> blks= findTopFuncCalls(s)
-    
-    >>> blks  # doctest: +NORMALIZE_WHITESPACE
-    [Blk(typ='fcalls', rng=(3, 9), rel_rng=(0, 3, 0, 9), txt='f(a,3)'), 
-    Blk(typ='fcalls', rng=(14, 22), rel_rng=(0, 14, 0, 22), txt='g( h(3))')]   
-    
-    >>> [ checkTokenRng(s, x) for x in blks ]
-    [True, True]
-    
-    >>> s2= "module mod(a,b=2,c=[3,4],d=g(2,3)){...}"
-    >>> blks2= findTopFuncCalls(s2)
-    >>> blks2  # doctest: +NORMALIZE_WHITESPACE
-    [Blk(typ='fcalls', rng=(7, 34), rel_rng=(0, 7, 0, 34), txt='mod(a,b=2,c=[3,4],d=g(2,3))')]    
-    
-  '''
-  return findTopBlks( text, name='fcalls'
-        , ends=( RE_ID+_0ms()+'\(', '\)') )
-  
-                           
+                       
 def find1stModBlk(text):
   '''      
     >>> s='a=3; move([(2,3),4]){ cube(); }; '
@@ -2092,214 +1382,12 @@ def find1stModBlk(text):
   if rtn: rtn= rtn[0]
   return rtn
  
-def findAllFuncModDefs(text):
-  '''
-    Return a tuple, (ntFs,ntMs), containing nt (named tuples) for 
-    all func and mod definitions
-  
-    Added 2016.3.22 --- but we have parseTopApi() already ... ??
-  '''
-  ptn_calls = _1ms() + RE_ID+ _0ms()+'\('
-  ends_func= ('function'+ ptn_calls , '\)'+_0ms()+ '\=' )
-  ends_mod = ('module'  + ptn_calls , '\)'+_0ms()+ '\{' )
-  ntF= findAllBlks( text, name='FuncDef', ends=ends_func, skip_ends= ('\(', '\)') )
-  ntM= findAllBlks( text, name='ModDef', ends=ends_mod, skip_ends= ('\(', '\)') )
-  return (ntF, ntM)  
-      
-  
 def findAllLists( s ):
   return findAllBlks( s, name='[]', ends=('\[', '\]') )
-
+  
 def isInTokenRng(tk,i):
   return tk.rng[0]<=i and i<tk.rng[1]  
   
-def tokenizeArg(text):
-    '''
-    Given an arg str like '3,[1,3,5],g([3,4]),"str", c=f(4),d="str2"', 
-    tokenize it and return a list of ntTokens.
-      
-      
-    >>> s= "a=3,b=4,c=f(4),d=[2,3,4]"
-    >>> x = list(tokenizeArg(s))
-    >>> x   # doctest: +NORMALIZE_WHITESPACE
-    [Token(typ='Assign_num', rng=(0, 3), rel_rng=(0, 0, 0, 3), txt='a=3'), 
-    Token(typ='Assign_num', rng=(4, 7), rel_rng=(0, 4, 0, 7), txt='b=4'), 
-    Blk(typ='Assign_fcall', rng=(8, 14), rel_rng=(0, 8, 0, 14), txt='c=f(4)'), 
-    Blk(typ='Assign_list', rng=(15, 24), rel_rng=(0, 15, 0, 24), txt='d=[2,3,4]')] 
-    
-    [Token(typ='Assign_num', rng=(0, 3), rel_rng=(0, 0, 0, 3), txt='a=3'), 
-    Token(typ='Assign_num', rng=(4, 7), rel_rng=(0, 4, 0, 7), txt='b=4'), 
-    Token(typ='Assign_id', rng=(8, 11), rel_rng=(0, 8, 0, 11), txt='c=f'), 
-    Blk(typ='fcalls', rng=(10, 14), rel_rng=(0, 10, 0, 14), txt='f(4)'), 
-    Blk(typ='Assign_list', rng=(15, 24), rel_rng=(0, 15, 0, 24), txt='d=[2,3,4]')]
-    
-               
-    >>> s2= '3,[1,3,5],g([3,4]),"str", c=f(4),d="str2"'
-    >>> x = list(tokenizeArg(s2))
-    >>> x   # doctest: +NORMALIZE_WHITESPACE
-    [Token(typ='num', rng=(0, 1), rel_rng=(0, 0, 0, 1), txt='3'), 
-    Blk(typ='[]', rng=(2, 9), rel_rng=(0, 2, 0, 9), txt='[1,3,5]'), 
-    Blk(typ='fcalls', rng=(10, 18), rel_rng=(0, 10, 0, 18), txt='g([3,4])'), 
-    Token(typ='str', rng=(19, 24), rel_rng=(0, 19, 0, 24), txt='"str"'), 
-    Blk(typ='Assign_fcall', rng=(26, 32), rel_rng=(0, 26, 0, 32), txt='c=f(4)'),
-    Token(typ='Assign_str', rng=(33, 41), rel_rng=(0, 33, 0, 41), txt='d="str2"')]
-
-    [Token(typ='num', rng=(0, 1), rel_rng=(0, 0, 0, 1), txt='3'), 
-    Blk(typ='[]', rng=(2, 9), rel_rng=(0, 2, 0, 9), txt='[1,3,5]'), 
-    Blk(typ='[]', rng=(2, 9), rel_rng=(0, 2, 0, 9), txt='[1,3,5]'), 
-    Blk(typ='fcalls', rng=(10, 18), rel_rng=(0, 10, 0, 18), txt='g([3,4])'), 
-    Token(typ='str', rng=(19, 24), rel_rng=(0, 19, 0, 24), txt='"str"'), 
-    Blk(typ='Assign_fcall', rng=(26, 32), rel_rng=(0, 26, 0, 32), txt='c=f(4)'), 
-    Token(typ='Assign_str', rng=(33, 41), rel_rng=(0, 33, 0, 41), txt='d="str2"')]   
-     
-    '''
-    
-    #print('\nEnter tokenizeArg()')
-    
-    ASSIGN = RE_ID+_0ms()+'=' +_0ms()
-    
-    ## find abc= func(...)
-    #print( '  Finding "abc= func(...)"')
-    assign_fcalls= findTopBlks( text, name='Assign_fcall'
-          , ends=( ASSIGN+RE_ID+_0ms()+'\(', '\)'), skip_ends= ('\(', '\)') )
-    rtn = [ (x.rng, x) for x in assign_fcalls ] # change x to (x.rng,x) for sort
-    #print( 'rtn = %s'%rtn)  
-    
-    ## find de = [...]
-    #print( '  Finding "de = [...]"')
-    assign_lists = findTopBlks( text, name='Assign_list'
-          , ends=( ASSIGN+'\[', '\]'), skip_ends= ('\[', '\]') )
-    rtn= rtn+[ (x.rng, x) for x in assign_lists ] 
-          
-    ## Find other assignments
-    #print('  Finding other assignments')
-    assigns = tokenize(text, rules=(  
-                 ('Assign_num', ASSIGN+RE_NUM)
-                ,('Assign_str', ASSIGN+RE_STR)
-                ,('Assign_id', ASSIGN+RE_ID)
-                ))
-    rtn=rtn+[ (x.rng, x) for x in assigns ] 
-    
-    lists= findTopBlks(text, name='[]',ends=('\[','\]'))
-    rtn=rtn+[ (x.rng, x) for x in lists ] 
-    
-    lists= findTopBlks(text, name='[]',ends=('\[','\]'))
-    rtn=rtn+[ (x.rng, x) for x in lists ] 
-
-    fcalls= findTopFuncCalls(text)
-    rtn=rtn+[ (x.rng, x) for x in fcalls ] 
-     
-    vals = list(tokenize(text, rules=(  
-                 ('num', RE_NUM)
-                ,('str', RE_STR)
-                ,('id', RE_ID)
-                ))
-                )
-    rtn=rtn+[ (x.rng, x) for x in vals ] 
-                
-    rtn.sort()
-    newrtn = []
-    
-    # Somehow we got duplicates in some situation so we del them
-    for x in rtn:  
-      if not x[1] in newrtn:
-        newrtn.append( x[1] ) 
-    #rtn = [x[1] for x in rtn]
-    #print( 'rtn before delSubNts: %s'%rtn )
-    rtn = delSubNts(newrtn)    
-
-    return rtn 
-
-
-    
-#s2= '3,[1,3,5],g([3,4]),"str", c=f(4),d="str2"'
-#x = list(tokenizeArg(s2))
-    
-def parseTopApi(s):
-  '''
-           01234567890123456
-  >>> s = 'function f( a )'
-  >>> apis = parseTopApi(s)
-  >>> apis 
-  [api(typ='function', name='f', rng=(0, 15), rel_rng=(0, 0, 0, 15), txt='function f( a )', argtxt=' a ', argnames=['a'], reqargs=['a'], optargs=[])]
-
-            0123456789 123456789 123456789 123456789 123456789 123456789 123456789
-  >>> s2 = 'a=3; module mod(a,b=2,c=g(d),d=g(2,3)){...} function func(x=g(2))=...'
-  >>> apis2 = parseTopApi(s2)
-  >>> apis2      # doctest: +NORMALIZE_WHITESPACE
-    [api(typ='module', name='mod', rng=(5, 38), rel_rng=(0, 5, 0, 38), 
-     txt='module mod(a,b=2,c=g(d),d=g(2,3))', argtxt='a,b=2,c=g(d),d=g(2,3)', 
-     argnames=['a', 'b', 'c', 'd'], reqargs=['a'], 
-     optargs=[('b', '2'), ('c', 'g(d)'), ('d', 'g(2,3)')]), 
-    api(typ='function', name='func', rng=(44, 65), rel_rng=(0, 44, 0, 65), 
-     txt='function func(x=g(2))', argtxt='x=g(2)', 
-     argnames=['x'], reqargs=[], 
-     optargs=[('x', 'g(2)')])]
- 
-
-  >>> s2 = 'a=3; module mod(a,b=2,c,d=g(2,3)){...} function func(x=g(2))=...'
-  >>> apis2 = parseTopApi(s2)
-  >>> apis2      # doctest: +NORMALIZE_WHITESPACE
-  [api(typ='module', name='mod', rng=(5, 33), rel_rng=(0, 5, 0, 33), 
-   txt='module mod(a,b=2,c,d=g(2,3))', argtxt='a,b=2,c,d=g(2,3)', 
-   argnames=['a', 'c', 'b', 'd'], reqargs=['a', 'c'], 
-   optargs=[('b', '2'), ('d', 'g(2,3)')]), 
-   api(typ='function', name='func', rng=(39, 60), rel_rng=(0, 39, 0, 60), 
-   txt='function func(x=g(2))', argtxt='x=g(2)', 
-   argnames=['x'], reqargs=[], optargs=[('x', 'g(2)')])]
-  
-  '''
-    #return findTopBlks( text, name='fcalls'
-    #    , ends=( RE_ID+_0ms()+'\(', '\)') )
-       
-  ntApis = findTopBlks( s, name='Api'
-        , ends=( _nc(_or('module','function') + _1ms())+ RE_ID+_0ms()+'\(', '\)') 
-        , skip_ends=('\(','\)')
-        )        
-        
-  #ntCalls = findTopFuncCalls(s)      
-  #print('ntCalls = ', ntCalls)      
-  rtn=[]
-  
-  for nt in ntApis:
-  
-    argtxt = ')'.join( '('.join( nt.txt.split('(')[1:] ).split(')')[:-1] )
-    ntArgs = list(tokenizeArg(argtxt))
-    reqargs= [ x.txt.strip() for x in ntArgs if not x.typ.startswith('Assign_') ]
-    optargs= [ x.txt.split('=') for x in ntArgs if x.typ.startswith('Assign_') ]
-    optargs= [ (name.strip(),val.strip()) for name,val in optargs ] 
-      
-    api = collections.namedtuple( 'api',
-          ['typ', 'name','rng','rel_rng','txt'
-          ,'argtxt', 'argnames', 'reqargs','optargs' ])( 
-              nt.txt.split(' ')[0]
-            , nt.txt.split('(')[0].split(' ')[1].strip()
-            , nt.rng
-            , nt.rel_rng
-            , nt.txt 
-            , argtxt
-            , reqargs + [ name for name,val in optargs] ##=argnames
-            , reqargs
-            , optargs
-            )
-    rtn.append( api )
-            
-  return rtn
-    
-    
-#s2 = 'a=3; module mod(a,b=2,c=g(d),d=g(2,3)){...} function func(x=g(2))=...'
-#apis2 = find1stBlk(s2, ends=( _or('module','function') + _1ms()+ RE_ID+_0ms()+'\(', '\)'))
-#print( 'apis2= ', apis2 )  
-
-#s2 = 'a=3; module mod(a,b=2,c=g(d),d=g(2,3)){...} function func(x=g(2))=...'
-#apis2 = parseTopApi(s2)
-#('ntCalls = ', 
-#[Blk(typ='fcalls', rng=(12, 38), rel_rng=(0, 12, 0, 38), txt='mod(a,b=2,c=g(d),d=g(2,3))'), 
-# Blk(typ='fcalls', rng=(53, 65), rel_rng=(0, 53, 0, 65), txt='func(x=g(2))')
-#]
-#)
-           
-          
 #. Is token at i ?
 
 def ntNum_at_i( s, i ):
@@ -2360,7 +1448,7 @@ def ntPt_at_i( s, i, dim=3 ):
            012345678901234567890
     >>> s=' pts=[ [a,b,c], [2,3,w] ]; '
     >>> ntPt_at_i( s,9)  # doctest: +NORMALIZE_WHITESPACE
-    Token(typ='PT', rng=(7, 14), rel_rng=(0, 7, 0, 14), txt='[a,b,c]')
+    [Token(typ='PT', rng=(7, 14), rel_rng=(0, 7, 0, 14), txt='[a,b,c]')]
         
     >>> ntPt_at_i( s,15)    # Return nothing
        
@@ -2370,7 +1458,7 @@ def ntPt_at_i( s, i, dim=3 ):
   rtn=None
   if ntPts:
     rtn= [ nt for nt in ntPts if isInTokenRng( nt, i ) ]
-    if rtn: return rtn[0]
+    if rtn: return rtn
     
   
 def ntLists_at_i(s,i):
@@ -2390,168 +1478,8 @@ def ntLists_at_i(s,i):
   ntlists = findAllLists( s )
   if ntlists:
     return [ nt for nt in ntlists if isInTokenRng( nt, i ) ]
+
  
-def top_ntTuple_at_i(s,i): 
-  '''
-  For a string "t=func(3,4,a=5,b=f(3));", if i falls in
-  range (3,4,a=5,b=f(3)), return a named tuple.
-  
-          0123456789012345678901234
-  >>> s= "t=func(3,4,a=5,b=f(3));"
-  >>> tp = top_ntTuple_at_i(s, 10)
-  >>> tp
-  Blk(typ='Tuple', rng=(6, 22), rel_rng=(0, 6, 0, 22), txt='(3,4,a=5,b=f(3))')
-  
-  
-  >>> top_ntTuple_at_i(s, 2)
-  
-  TODO: tokenize tuple contents
-  
-  To tokenize tuple (or list) content, it can't be done by just
-  splitting "(a=3,b,c)" by ",", 'cos elemt of the collection could
-  also contain ",", like "(a, (b,c),d=[2,3])"
-   
-  What we can do is: scan top block first, and tokenize what's left.
-  '''
-  tps = findTopTuples(s)
-  rtn= [ nt for nt in tps if isInTokenRng(nt,i) ]
-  #  if rtn:
-  #    rules=( 'KW_ARG', _01(RE_ID+'\=')+ 
-  #  >>> rules=( ('ASSIGN', RE_ID+'\='+RE_STR)
-  #  ...       , ('SKIP', RE_SKIP) 
-  #  ...       )
-
-  return rtn and rtn[0] or None
-
-def top_ntTuple_at_i0(s,i):
-  '''
-  For a string "t=func(3,4,a=5,b=f(3));", if i falls in
-  range (3,4,a=5,b=f(3)), return a nt.
-  
-          0123456789012345678901234
-  >>> s= "t=func(3,4,a=5,b=f(3));"
-  >>> tp = top_ntTuple_at_i(s, 10)
-  >>> tp
-  Blk(typ='Tuple', rng=(6, 22), rel_rng=(0, 6, 0, 22), txt='(3,4,a=5,b=f(3))')
-  
-  >>> top_ntTuple_at_i(s, 2)
-  
-  TODO: tokenize tuple contents
-  
-  To tokenize tuple (or list) content, it can't be done by just
-  splitting "(a=3,b,c)" by ",", 'cos elemt of the collection could
-  also contain ",", like "(a, (b,c),d=[2,3])"
-   
-  What we can do is: scan top block first, and tokenize what's left.
-  '''
-  tps = findTopTuples(s)
-  rtn= [ nt for nt in tps if isInTokenRng(nt,i) ]
-  #  if rtn:
-  #    rules=( 'KW_ARG', _01(RE_ID+'\=')+ 
-  #  >>> rules=( ('ASSIGN', RE_ID+'\='+RE_STR)
-  #  ...       , ('SKIP', RE_SKIP) 
-  #  ...       )
-
-  return rtn and rtn[0] or None
-   
-def ntCalls_at_i(s,i):
-  '''
-    Return a list of ntFuncCalls (named tuple representing a func/mod call) 
-    where index i falls in. Ref to findAllBlks doc text for related features.
-    
-            01234567890123456789
-    >>> s= "f(a= g( b, h(d)) )"
-    >>> blks = ntCalls_at_i( s, 3)
-    >>> blks
-    [Blk(typ='Call', rng=(0, 18), rel_rng=(0, 0, 0, 18), txt='f(a= g( b, h(d)) )')]
-
-    >>> blks = ntCalls_at_i( s, 8)
-    >>> blks     # doctest: +NORMALIZE_WHITESPACE
-    [Blk(typ='Call', rng=(0, 18), rel_rng=(0, 0, 0, 18), txt='f(a= g( b, h(d)) )'), 
-    Blk(typ='Call', rng=(5, 16), rel_rng=(0, 5, 0, 16), txt='g( b, h(d))')]
-    
-    >>> blks = ntCalls_at_i( s, 13)
-    >>> blks     # doctest: +NORMALIZE_WHITESPACE
-    [Blk(typ='Call', rng=(0, 18), rel_rng=(0, 0, 0, 18), txt='f(a= g( b, h(d)) )'), 
-    Blk(typ='Call', rng=(5, 16), rel_rng=(0, 5, 0, 16), txt='g( b, h(d))'), 
-    Blk(typ='Call', rng=(11, 15), rel_rng=(0, 11, 0, 15), txt='h(d)')]
-    
-    Note that the last one, ntCalls_at_i(...)[-1], is the smallest arg list.
-
-    >>> blks = ntCalls_at_i( s, 12)
-    >>> blks     # doctest: +NORMALIZE_WHITESPACE
-    [Blk(typ='Call', rng=(0, 18), rel_rng=(0, 0, 0, 18), txt='f(a= g( b, h(d)) )'), 
-    Blk(typ='Call', rng=(5, 16), rel_rng=(0, 5, 0, 16), txt='g( b, h(d))'), 
-    Blk(typ='Call', rng=(11, 15), rel_rng=(0, 11, 0, 15), txt='h(d)')]
-    
-    2016.3.22: if it is preceded with 'function' or 'module', it is a 
-               definition but not a 'call', so will be skipped.
-                     
-             0123456789 123456789
-    >>> s = 'function f(ab,c)=...'
-    >>> blks = ntCalls_at_i( s, 12)
-    >>> blks     # doctest: +NORMALIZE_WHITESPACE
-    []
-    
-  '''
-
-  ntFuncCalls = findAllBlks(s, name='Call', ends=( RE_ID+_0ms()+'\(', '\)'))
-  ntFuncCalls = [ blk for blk in ntFuncCalls if isInRng(blk.rng,i) 
-                  and not s[:blk.rng[0]].strip().startswith('module')
-                  and not s[:blk.rng[0]].strip().startswith('function')
-                ] #blk.rng[0]<=i and i<blk.rng[1] ]
-  
-  return ntFuncCalls
-  
-def ntCallArgs_at_i(s,i):
-  '''
-    Return a list of ntArgs (named tuple representing a func/mod call) 
-    where index i falls in.
-    
-            0123456789 123456789
-    >>> s= "f(a= g( b, h(d)) )"
-    >>> blks = ntCallArgs_at_i( s, 3)
-    >>> blks
-    [Blk(typ='Call', rng=(0, 18), rel_rng=(0, 0, 0, 18), txt='f(a= g( b, h(d)) )')]
-
-    >>> blks = ntCallArgs_at_i( s, 8)
-    >>> blks     # doctest: +NORMALIZE_WHITESPACE
-    [Blk(typ='Call', rng=(0, 18), rel_rng=(0, 0, 0, 18), txt='f(a= g( b, h(d)) )'), 
-    Blk(typ='Call', rng=(5, 16), rel_rng=(0, 5, 0, 16), txt='g( b, h(d))')]
-    
-    >>> blks = ntCallArgs_at_i( s, 14)
-    >>> blks     # doctest: +NORMALIZE_WHITESPACE
-    [Blk(typ='Call', rng=(0, 18), rel_rng=(0, 0, 0, 18), txt='f(a= g( b, h(d)) )'), 
-    Blk(typ='Call', rng=(5, 16), rel_rng=(0, 5, 0, 16), txt='g( b, h(d))'), 
-    Blk(typ='Call', rng=(11, 15), rel_rng=(0, 11, 0, 15), txt='h(d)')]
-        
-    Note that the last one, ntCalls_at_i(...)[-1], is the smallest arg list.
-
-    >>> blks = ntCallArgs_at_i( s, 12)
-    >>> blks     # doctest: +NORMALIZE_WHITESPACE
-    [Blk(typ='Call', rng=(0, 18), rel_rng=(0, 0, 0, 18), txt='f(a= g( b, h(d)) )'), 
-     Blk(typ='Call', rng=(5, 16), rel_rng=(0, 5, 0, 16), txt='g( b, h(d))')]    
-    
-    Note that if this is blks = ntCalls_at_i( s, 12), it would be:
-    
-    [Blk(typ='Call', rng=(0, 18), rel_rng=(0, 0, 0, 18), txt='f(a= g( b, h(d)) )'), 
-     Blk(typ='Call', rng=(5, 16), rel_rng=(0, 5, 0, 16), txt='g( b, h(d))'), 
-     Blk(typ='Call', rng=(11, 15), rel_rng=(0, 11, 0, 15), txt='h(d)')]
-          
-  '''
-
-  ntCalls = ntCalls_at_i(s,i)
-  #for nt in ntFuncCalls:
-  #  rng = (nt.rng[0]+len(nt.txt.split('(')[0])+1, nt.rng[1])
-    #print('i=%s, rng=%s'%(i, rng))
-    
-  ntArgs = [ nt for nt in ntCalls if 
-            isInRng( (nt.rng[0]+len(nt.txt.split('(')[0])+1, nt.rng[1]), i)
-           ]
-  return ntArgs
-   
-   
-  
 #. Tests
 
 
@@ -2567,9 +1495,7 @@ def re_test():
       doctest.run_docstring_examples(func, globals())                                                
   
   funcs = ( 
-           isContainRng
-            
-           ,'RE'
+           'RE'
           , _or_items
           , test_re_or
           , _1m
@@ -2588,7 +1514,6 @@ def re_test():
           , get_rel_rng
           , re_rng
           , checkTokenRng
-          , tokenize_str
           , tokenize_pt
           
           , 'Token at i'
@@ -2598,9 +1523,6 @@ def re_test():
           , ntId_at_i
           , ntLists_at_i
           , ntPt_at_i
-          , top_ntTuple_at_i
-          , ntCalls_at_i
-          , ntCallArgs_at_i
           
           , 'Scanning block'
           
@@ -2610,12 +1532,8 @@ def re_test():
           , find1stComplex
           , findTopComplexes
           
-          , retiring_find1stRoundBlk
+          , find1stRoundBlk
           , find1stModBlk
-          , findTopFuncCalls
-          , tokenizeArg
-          , parseTopApi
-          
           )
   def dumb():pass
   for f in funcs: 
