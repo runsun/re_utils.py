@@ -14,87 +14,140 @@ import re, doctest, collections
 #. re func : c, nc
 def _c(txt): return r'('+txt+r')'     ## captured group
 def _nc(txt): return r'(?:'+txt+r')'  ## non-captured group
+
+# For tree logging
+# See https://pypi.org/project/pytreelog/ for help
+from pytreelog.pytreelog import TreeLog
+tl = TreeLog()
+
 #. re func : or  
-def _or_items( data, itemcap=''):
+def _or_items( data, itemcap=True):
   '''
     >>> _or_items( ('abc','def') )
     '(abc|def)'
     
-    >>> _or_items( ('abc','def'), 'c' )
-    '((abc)|(def))'
-    
-    >>> _or_items( ('abc','def'), 'nc' )
-    '((?:abc)|(?:def))'
-    
-  '''
-    
-  if itemcap == 'c': data=[ _c(x) for x in data ]
-  elif itemcap=='nc': data=[ _nc(x) for x in data ]
-  return  _c( r'|'.join(data) )
-def _or(*args): 
-  data = (type(args[0]) in (list,tuple)) and args[0] or args
-  return _or_items( data, itemcap='')
-    
-def _or_c(*args): 
-  data = (type(args[0]) in (list,tuple)) and args[0] or args
-  return _or_items( data, itemcap='c')
-
-def _or_nc(*args): 
-  data = (type(args[0]) in (list,tuple)) and args[0] or args
-  return _or_items( data, itemcap='nc')
-
-def _nc_or_items( data, itemcap=''):
-  if itemcap == 'c': data=[ _c(x) for x in data ]
-  elif itemcap=='nc': data=[ _nc(x) for x in data ]
-  return  _nc( r'|'.join(data) )    
-  
-def _nc_or(*args): 
-  data = (type(args[0]) in (list,tuple)) and args[0] or args
-  return _nc_or_items( data, itemcap='')
-    
-def _nc_or_c(*args): 
-  data = (type(args[0]) in (list,tuple)) and args[0] or args
-  return _nc_or_items( data, itemcap='c')
-
-def _nc_or_nc(*args): 
-  data = (type(args[0]) in (list,tuple)) and args[0] or args
-  return _nc_or_items( data, itemcap='nc')
-            
-def test_re_or():
-    '''                     
-    >>> _or( ('abc','def'))
+    >>> _or_items( ('abc','def'), True )
     '(abc|def)'
+    
+    #'((abc)|(def))'
+    
+    >>> _or_items( ('abc','def'), False )
+    '(?:abc|def)'
+    
+    #'((?:abc)|(?:def))'
+    
+  '''    
+  data = r'|'.join(data)
+  return itemcap and _c(data) or _nc(data)
+  
+  #if itemcap == 'c': data=[ _c(x) for x in data ]
+  #elif itemcap=='nc': data=[ _nc(x) for x in data ]
+  #return  _c( r'|'.join(data) )
+
+def _or(*args): 
+  '''
     >>> _or( 'abc','def')
     '(abc|def)'
+    >>> _or('a','b','c')
+    '(a|b|c)'
+  '''  
+  return _or_items( list(args), itemcap=True )
+
+  #data = (type(args[0]) in (list,tuple)) and args[0] or args
+  #return _or_items( data, itemcap='')
     
+"""    
+def _or_c(*args): 
+  '''
+    Seems to have no use of this
+
+    >>> _or_c('a','b','c')
+    '((a)|(b)|(c))'
+    
+    Why not ((a|b|c)) ??
+
     >>> _or_c( 'abc','def')
     '((abc)|(def))'
     >>> _or_c( ('abc','def'))
     '((abc)|(def))'
-                           
-    >>> _or_c( 'abc','def')
-    '((abc)|(def))'
-    >>> _or_nc( ('abc','def'))
-    '((?:abc)|(?:def))'
-       
-    >>> _nc_or( ('abc','def'))
-    '(?:abc|def)'
+  '''  
+  
+  data = (type(args[0]) in (list,tuple)) and args[0] or args
+  return _or_items( data, itemcap='c')
+"""
+
+def _or_nc(*args): 
+  """
+    >>> _or_nc('a','b','c')
+    '(?:a|b|c)'
+    
+    #'((?:a)|(?:b)|(?:c))'
+  """  
+  return _or_items(list(args), itemcap=False)
+
+  #data = (type(args[0]) in (list,tuple)) and args[0] or args
+  #return _or_items( data, itemcap='nc')
+
+def _nc_or_items( data): #, itemcap=''):
+
+  return _or_items( data, itemcap=False)
+  #if itemcap == 'c': data=[ _c(x) for x in data ]
+  #elif itemcap=='nc': data=[ _nc(x) for x in data ]
+  #return  _nc( r'|'.join(data) )    
+  
+def _nc_or(*args):
+  '''
     >>> _nc_or( 'abc','def')
     '(?:abc|def)'
+    
+    #'((?:abc)|(?:def))'
+
+  '''
+
+  data = (type(args[0]) in (list,tuple)) and args[0] or args
+  return _nc_or_items( data) #, itemcap='')
+    
+"""
+def _nc_or_c(*args): 
+  '''  
+    Seems to have no use of this. 
+
     >>> _nc_or_c( 'abc','def')
     '(?:(abc)|(def))'
     >>> _nc_or_c( ('abc','def'))
     '(?:(abc)|(def))'
-                           
-    >>> _nc_or_c( 'abc','def')
-    '(?:(abc)|(def))'
+
+  '''  
+  data = (type(args[0]) in (list,tuple)) and args[0] or args
+  return _nc_or_items( data ) #, itemcap='c')
+"""
+
+"""
+def _nc_or_nc(*args): 
+  '''
     >>> _nc_or_nc( ('abc','def'))
-    '(?:(?:abc)|(?:def))'
-    
-    '''
-#. re func : repeats 
+    '((?:abc)|(?:def))'
+  
+    -- Original: '(?:(?:abc)|(?:def))'
+       Don't know why.
+    -- Wouldn't (?:(abc|def)) suffice ?
+
+  '''  
+  data = (type(args[0]) in (list,tuple)) and args[0] or args
+  return _nc_or_items( data ) #, itemcap='nc')
+"""  
+            
 def _rep( data, count=r'*', counts=None, cap=''):
   '''
+    
+    Return a string representing the re pattern of "repeatition" of data.
+    = data + (count symbol or counts range)
+    
+      data: string to match
+      count: *|?|+ 
+      counts: '2,3' 
+      cap: 'c'|'nc' for capture|no-capture 
+
     >>> _rep('abc') 
     'abc*'
     
@@ -109,7 +162,7 @@ def _rep( data, count=r'*', counts=None, cap=''):
     
     >>> _rep('abc', counts='2,3', cap='nc')
     '(?:abc){2,3}'
-     
+      
   '''
   if counts:
     return { 'nc' : r'(?:' + data+ r'){'+counts+ r'}'
@@ -125,7 +178,12 @@ def _rep( data, count=r'*', counts=None, cap=''):
 def _nc_rep( data, count=r'*', counts=None):
   return _rep( data, count=count, counts=counts, cap = 'nc')
   
-def _01(data):  return _rep(data, count=r'?', cap='c' )
+def _01(data):  
+  '''
+   
+
+  '''
+  return _rep(data, count=r'?', cap='c' )
 def _0m(data):  return _rep(data, count=r'*', cap='c' )
 def _1m(data):  
   '''    
@@ -327,8 +385,8 @@ RE_SKIP = _nc_or( r'[ \t\n]',RE_ID, RE_STR, RE_NUM, RE_SYM )
 
 def ntToken(tkname, typ, rng, rel_rng, txt ):
   r'''
-    Return a namedtuple, usually as a result of scanning,
-    containing 4 attributes: 
+    Combine the arguments into a namedtuple for future use. 
+    These arguments are usually result of scanning. 
     
       .typ      type of token
       .rng      (i,j) as the absolute range of token
@@ -336,7 +394,8 @@ def ntToken(tkname, typ, rng, rel_rng, txt ):
                 r= line #, c = idx in line 
       .txt      the token content captured
     
-    tkname must be a valid identifier.     
+    tkname serves as the name of the namedtuple and 
+    must be a valid identifier.     
     
     >>> ntk = ntToken('blk','mod'
     ...  , (4,24),(0,4, 3, 5)
@@ -356,14 +415,18 @@ def ntToken(tkname, typ, rng, rel_rng, txt ):
           ['typ','rng','rel_rng','txt'])( typ, rng, rel_rng, txt )
  
 def tokenize (s, rules, isAutoSkip=True): 
-    r'''   
-     
+    r'''        
     Return a generator that spits out ntTokens (which is a 
-    namedtuple), each is
+    collections.namedtuple), each is
     
       Token( typ, rng, rel_rng, txt ) 
     
-    rule= (
+    s : the text to be tokenized.
+
+    rules: a collection of rules. Each rule is a tuple
+    (token_name, token_re)
+
+    rules= (
             (token_name, token_re)
           , (token_name, token_re)      
           , (token_name, token_re)      
@@ -374,10 +437,12 @@ def tokenize (s, rules, isAutoSkip=True):
           re.compile(ptn).match(s):   match the begin of s
           re.compile(ptn).search(s):  match any part of s
     
-          If any is not handle, error will occur. This is 
-          avoided by adding a 'SKIP' item to rule. 
+          If any is not handle, error will occur. This can be 
+          avoided by adding a 'SKIP' item to rule:
+
+          ('SKIP', RE_SKIP)  
         
-          If isAutoSkip, this SKIP will be added automatically
+    If isAutoSkip, this SKIP will be added automatically
     --------------------------------------------------
     NOTE:
     
@@ -389,19 +454,21 @@ def tokenize (s, rules, isAutoSkip=True):
       times. Note that every single letter/char/symbol (including 
       space) must be accounted for. (But, isAutoSkip=True can handle that)
     
-    findTopComplexes( text, name
-      , rules = (rule1, rule2, ...))
-      
-      rules example: ( RE_ID, ('\(','\)'), ('\{','\}') ) )
-      finds all top level complexes matching all rules combined=
-      rule1+rule2+...
+    # Note the *rules* in findTopComplexes() is fifferent:
+
+      findTopComplexes( text, name
+        , rules = (rule1, rule2, ...))
+        
+        rules example: ( RE_ID, ('\(','\)'), ('\{','\}') ) )
+        finds all top level complexes matching all rules combined=
+        rule1+rule2+...
 
     -----------------------------------------------------
-             01234567890123456789012345678901234567890123456789
+             012345678901234567
     >>> s = 'func(s="test")+5;'    
     
-    >>> rules=( ('ASSIGN', RE_ID+'\='+RE_STR)
-    ...       , ('SKIP', RE_SKIP) 
+    >>> rules=( ('ASSIGN', RE_ID+'\='+RE_STR)  # Find the text assignment
+    ...       , ('SKIP', RE_SKIP)              # Skip all others 
     ...       )
     
     >>> tks = tokenize( s, rules )
@@ -410,9 +477,12 @@ def tokenize (s, rules, isAutoSkip=True):
     <generator object tokenizer at 0x...>
     
     >>> tks = list(tks) # doctest: +NORMALIZE_WHITESPACE
+
+    # The string assignment 's="test"' found: 
     >>> tks 
     [Token(typ='ASSIGN', rng=(5, 13), rel_rng=(0, 5, 0, 13), txt='s="test"')]
         
+    # Check the range of the first found :     
     >>> checkTokenRng( s, tks[0] )
     True
     
@@ -429,6 +499,9 @@ def tokenize (s, rules, isAutoSkip=True):
     True
             
     -----------------------------------------------------
+    Find the func call from the same text:
+    >>> s = 'func(s="test")+5;'    
+    
     >>> rules3=[ ('FUNC', RE_ID+ r'\(.*?\)')]
     >>> tks=list(tokenize( s, rules3 )) # doctest: +NORMALIZE_WHITESPACE
     >>> tks
@@ -438,7 +511,7 @@ def tokenize (s, rules, isAutoSkip=True):
     True
         
     -----------------------------------------------------
-    Note: the above rules3 is not a good one for finding function,
+    Note: the above rules3 is not a good one for finding function call,
     'cos it fails to handle the following 2 conditions:
     
     >>> s2 = 'func( g(i) );'    
@@ -451,7 +524,7 @@ def tokenize (s, rules, isAutoSkip=True):
        
     >>> s3 = 'func( a="g(i)" );'    
     
-    The following is wrong:
+    The following is wrong, too:
     
     >>> list(tokenize( s3, rules3 )) # doctest: +NORMALIZE_WHITESPACE
     [Token(typ='FUNC', rng=(0, 13), rel_rng=(0, 0, 0, 13), txt='func( a="g(i)')]       
@@ -480,7 +553,7 @@ def tokenize (s, rules, isAutoSkip=True):
     [True, True, True]
        
     -----------------------------------------------------
-    String containing wanted tokens that are in multiline. 
+    String containing wanted tokens that are splitted in multiline. 
     
                   01234567890
     >>> s_ml2 = """var a=  
@@ -490,7 +563,8 @@ def tokenize (s, rules, isAutoSkip=True):
     
     >>> tks= list( tokenize(s_ml2, rules_set_num ) ) 
     >>> tks # doctest: +NORMALIZE_WHITESPACE
-    [Token(typ='SetNum', rng=(4, 10), rel_rng=(0, 4, 1, 1), txt='a=  \n4'), Token(typ='SetNum', rng=(12, 20), rel_rng=(2, 0, 3, 4), txt='b  \n=3.8')] 
+    [Token(typ='SetNum', rng=(4, 10), rel_rng=(0, 4, 1, 1), txt='a=  \n4'), 
+     Token(typ='SetNum', rng=(12, 20), rel_rng=(2, 0, 3, 4), txt='b  \n=3.8')] 
     
     >>> [ checkTokenRng( s_ml2, tk) for tk in tks] 
     [True, True]
@@ -547,11 +621,129 @@ def tokenize (s, rules, isAutoSkip=True):
               'Unexpected character "%r" on line %d:\n"%s"' %(
               s[pos], iline, s[iline]))
 
-def get_rel_rng(text, rng):
+
+def get_text_by_rng(text, rng):
+    """
+    """
+    return text[rng[0]:rng[1]]
+
+
+def get_text_by_rel_rng(text, rel_rng):
   r'''
-    Given rng=(i,j), return rel_rng = (ilinebeg, cbeg, ilineend, cend)
+
+  >>> s= """abcde 
+  ... fgh
+  ... ij klmno""" 
+  
+  >>> tk = list( tokenize( s, [( 'Data', 'fgh(\\n)ij')] ) )[0]
+  >>> tk 
+  Token(typ='Data', rng=(7, 13), rel_rng=(1, 0, 2, 2), txt='fgh\nij')
+
+  >>> get_text_by_rel_rng( s, tk.rel_rng)       
+  'fgh\nij'
+
+
+  '''
+  return get_text_by_rng(text, get_rng_by_rel_rng(text, rel_rng))
+
+
+def get_rng_by_rel_rng( text, rel_rng):
+  '''
+  Convert rel_rng to rng (2020.5.12)
+
+  The following example uses **rules_set_num** to find num assignment on the 2nd line:
+  
+  >>> tl.off()
+  >>> rules_set_num = [ 
+  ...    ('SetNum', RE_ID+ _0ms()+'\='+_0ms() +RE_NUM ) ]
+  
+  >>> s = """var a='test;
+  ... var b= 4;
+  ... c = [0,1]
+  ... """
+
+  >>> tks= list( tokenize(s, rules_set_num ) ) 
+  >>> tks # doctest: +NORMALIZE_WHITESPACE
+  [Token(typ='SetNum', rng=(17, 21), rel_rng=(1, 4, 1, 8), txt='b= 4')] 
+
+  >>> checkTokenRng( s, tks[0] )
+  True
+  >>> tks[0].rng
+  (17, 21)
+
+  >>> get_text_by_rng( s, tks[0].rng )
+  'b= 4'
+  
+  >>> tl.on()
+  >>> get_rng_by_rel_rng( s, tks[0].rel_rng )
+  (17, 21)
+  >>> tl.off()
+
+
+  >> get_text_by_rng( s, tks[0].rng )  
+  'b= 4'
+
+  >> get_text_by_rel_rng( s, tks[0].rel_rng )  
+  'b= 4'
+  
+  The following finds num assignments for a,b over multilines:
+
+  >>> s2 = """var a=  
+  ... 4;
+  ... b  
+  ... =3.8;"""
+  
+  >>> tks2= list( tokenize(s2, rules_set_num ) ) 
+  >>> tks2 # doctest: +NORMALIZE_WHITESPACE
+  [Token(typ='SetNum', rng=(4, 10), rel_rng=(0, 4, 1, 1), txt='a=  \\n4'),
+    Token(typ='SetNum', rng=(12, 20), rel_rng=(2, 0, 3, 4), txt='b  \\n=3.8')] 
+
+  >>> checkTokenRng( s2, tks2[0] )
+  True
+  >>> checkTokenRng( s2, tks2[1] )
+  True
+
+  >>> tl.on()
+  >>> tl('get_rng_by_rel_rng( s2, tks2[0].rel_rng )')
+  >>> get_rng_by_rel_rng( s2, tks2[0].rel_rng )
+  (4, 10)
+  >>> tl.off()
+
+  >> get_rng_by_rel_rng( s2, tks2[1].rel_rng )
+  (12,20) 
+
+  '''
+
+  tl.b()
+  lines = text.split('\n')
+
+  (rbeg, ribeg, rend, riend) = rel_rng  # ri: relative i
+
+  if rbeg == 0:    # Matched at the first line
+    i_beg = ribeg  # => Use ribeg directly 
+  else:  
+    i_beg = ( sum( [len(line)+1 for line in lines[ :rbeg ] ])
+            + ribeg )
+
+  if  rbeg == rend :
+    return ( i_beg, i_beg+ riend - ribeg )
+  else:
+    return ( i_beg
+            , sum( [len(line)+1 for line in lines[: rend] ]) 
+              + riend
+            )
+  tl.e()  
+    
+
+def get_rel_rng(text, rng):
+    r'''
+    Given rng=(i,j), return rel_rng = (rbeg,ribeg,rend,riend)
       
                       012345678901234567890
+    where:
+      r*  : row numnber 
+      ri* : relative i number (i.e., i in that line, not absolute i)
+
     >>> get_rel_rng( 'Use get_rel_rng func', (4,15) )
     (0, 4, 0, 15)
     
@@ -563,36 +755,94 @@ def get_rel_rng(text, rng):
     'get_rel_rng \nfunc'
     >>> get_rel_rng( s, rng  )
     (1, 4, 2, 4)
-      
+
+    Convert a rng to rel_rng
+
+    >>> s= """abcde 
+    ... fgh
+    ... ij klmno""" 
     
-  '''
-  ibeg, iend = rng
-  
-  lines = text.split('\n')
-  if len(lines)==1: return ( 0, ibeg, 0, iend )
-  
-  partialLines = text[:ibeg].split('\n')
-  nLbeg = len( partialLines )-1
-  cbeg = len( partialLines[-1] )
-  
-  partialLines2 = text[:iend].split('\n')
-  nLend = len( partialLines2 )-1
-  cend = len( partialLines2[-1] ) 
-     
-  return ( nLbeg, cbeg, nLend, cend )          
+    >>> tk = list( tokenize( s, [( 'Data', 'fgh(\\n)ij')] ) )[0]
+    >>> tk 
+    Token(typ='Data', rng=(7, 13), rel_rng=(1, 0, 2, 2), txt='fgh\nij')
+
+    >>> get_rel_rng( s, tk.rng)       
+    (1, 0, 2, 2)
+      
+    '''
+    ibeg, iend = rng
+    
+    lines = text.split('\n')
+    if len(lines)==1: return ( 0, ibeg, 0, iend )
+    
+    partialLines = text[:ibeg].split('\n')
+    nLbeg = len( partialLines )-1
+    cbeg = len( partialLines[-1] )
+    
+    partialLines2 = text[:iend].split('\n')
+    nLend = len( partialLines2 )-1
+    cend = len( partialLines2[-1] ) 
+      
+    return ( nLbeg, cbeg, nLend, cend )          
    
+
 def checkTokenRng( text, ntTk, prnFail=False):
   r'''
     Chk if the ranges of a ntToken ( a namedtuple of
      (typ,rng,rel_rng,txt)) are correct
     
-    Return True|False. If prnFail, also print fail msg when fails.
+    It also checks if ntTk is valid.
     
+    Return True|False. If prnFail, also print fail msg when fails.
+
             01234567890
     >>> s= 'abc def ghi'
+
+    ### First we check if ntTk is valid:
+
+    ## We skip the first item: typ
+    ## ??? WHY THE FOLLOWING CODE GIVES "EOF" bug ??? 
+    >> nt = ( collections.namedtuple( 'aToken', 
+              ['rng','rel_rng','txt'])( (4,7), (0,4,0,7), 'def' )
+             ) 
+    >> checkTokenRng( s, nt, 'def' ), prnFalse=True )
+
+
     >>> checkTokenRng( s, ntToken('tk','tk',(4,7),(0,4,0,7),'def'), True)
     True
     
+    ### Check a token with wrong absolute range:
+    >>> checkTokenRng( s, ntToken('tk','tk',(4,8),(0,4,0,7),'def'), False)
+    False
+    
+    >>> checkTokenRng( s, ntToken('tk','tk',(4,8),(0,4,0,7),'def'), True)
+    CheckTokenRng() failed:
+    ==============================
+    * token= tk(typ='tk', rng=(4, 8), rel_rng=(0, 4, 0, 7), txt='def'):
+    * text to test= "abc def ghi"
+    * Wanted ranges: (4, 8) and (0, 4, 0, 7)
+    * Wanted text: "def"
+    * - rng(4, 8) gave: "def "
+    * - rel_rng(0, 4, 0, 7) gave: "def"
+    ==============================
+
+    ### Check a token with wrong relative range:
+    >>> checkTokenRng( s, ntToken('tk','tk',(4,7),(0,3,0,8),'def'), False)
+    False
+
+    >>> checkTokenRng( s, ntToken('tk','tk',(4,7),(0,3,0,8),'def'), True)
+    CheckTokenRng() failed:
+    ==============================
+    * token= tk(typ='tk', rng=(4, 7), rel_rng=(0, 3, 0, 8), txt='def'):
+    * text to test= "abc def ghi"
+    * Wanted ranges: (4, 7) and (0, 3, 0, 8)
+    * Wanted text: "def"
+    * - rng(4, 7) gave: "def"
+    * - rel_rng(0, 3, 0, 8) gave: " def "
+    ==============================
+
+    ### Check multilines text:
+
     >>> s2= """abcde 
     ... fgh
     ... ij klmno""" 
@@ -606,68 +856,57 @@ def checkTokenRng( text, ntTk, prnFail=False):
         
     >>> checkTokenRng( s2, tk, True)
     True
-  
-    
+
   '''
+
   ntTkMustHas= ('typ', 'rng', 'rel_rng', 'txt')
   ntTkHas = dir(ntTk)
   isValid = all( [ (x in ntTkHas) for x in ntTkMustHas] )
   
   if not isValid:
     if prnFail:
-      failmsg=( '\n###########################'
-            + '\ntokenRngChk() failed=> ntTk(=%s) should have been'%str(ntTk)
+      failmsg=( 
+      'CheckTokenRng() failed:'
+      + '\n'+'='*30
+      + '\n* token= %s:'%str(ntTk)
+      + '\nntTk(=%s) should have been'%str(ntTk)
+      + '\na namedtuple containing following customized attributes:'
+      + '\n'+'='*30
+      )
+      failmsg2=( '=== checkTokenRng() failed ==='
+            + '\nntTk(=%s) should have been'%str(ntTk)
             + '\na namedtuple containing following customized attributes:'
             #, '\n %s'%((ntkMustHas))
             )
       print(failmsg)
-    return False    
+    else:
+      return False    
   
-  rng = ntTk.rng
-  txt = text[ rng[0]: rng[1] ] 
-  abs_rng_chk = txt== ntTk.txt
-             
-  rbeg,cbeg, rend,cend= ntTk.rel_rng
-  lines =  text.split('\n')
-  lines = [ line+ (r<len(lines)-1 and '\n' or '') 
-            for r,line in enumerate(lines) ]
+  _type, _rng, _rel_rng, _text= ntTk
+  _rbeg, _ibeg, _rend, _iend  = _rel_rng 
   
-  def get_valid_line( iL, line ):
-    #print('\n> get_valid_line(): \niL=%s, line[%s]="%s"'%(iL,iL,line))      
-
-    rtn = { 1: ""
-          , iL> rbeg and iL< rend: line
-          , iL== rbeg: line[ cbeg: ]
-          , iL== rend: line[ :cend ]
-          , rbeg==rend==iL: line[ cbeg:cend ]    
-          }[1]
-    #print( 'rtn = "%s"'%rtn)
-    #print('iL=%s, rtn="%s"'%(iL,rtn))      
-    return rtn 
-           
-  txt = ''.join( [ get_valid_line(i,line) 
-                  for i,line in enumerate(lines) ] )
-                  
-  rel_rng_chk = txt == ntTk.txt
+  rng_from_rel_rng   = get_rng_by_rel_rng( text, _rel_rng )
+  _text_from_rng     = get_text_by_rng( text, _rng )
+  _text_from_rel_rng = get_text_by_rel_rng( text, _rel_rng )
   
-  ispass = abs_rng_chk and rel_rng_chk
+  if _text_from_rng == _text and _text_from_rel_rng== _text:
+      return True 
   
-  if prnFail and not ispass:
-                   
-    failmsg=( '\n###########################'
-            + '\ntokenRngChk() failed.'
-            + '\n> token= %s:'%str(ntTk)
-            + '\n> text ="%s"'%text
-            + (not abs_rng_chk and 
-               '\n> Failed rng: shouldn\'t be "%s"'%(txt) 
-               or "" )
-            + (not rel_rng_chk and 
-             '\n> Failed rel_rng: shouldn\'t be "%s"'%(txt) 
-             or "" )
-            ) 
+  if prnFail :
+    failmsg=( 
+      'CheckTokenRng() failed:'
+      + '\n'+'='*30
+      + '\n* token= %s:'%str(ntTk)
+      + '\n* text to test= "%s"'%text
+      + '\n* Wanted ranges: %s and %s'%(_rng, _rel_rng)
+      + '\n* Wanted text: "%s"'%(_text)
+      + '\n* - rng%s gave: "%s"'%(str(_rng), _text_from_rng)
+      + '\n* - rel_rng%s gave: "%s"'%(str(_rel_rng), _text_from_rel_rng)
+      + '\n'+'='*30
+      ) 
     print( failmsg )
-  
-  return ispass
+  else: 
+    return False   
 
 ''' Recursive matching [ ]
 
@@ -736,24 +975,29 @@ def re_rng( text, nt, d=None, moveto=None ):
                  , txt = nt.txt
                  )  
   
+
 def token_at_i(nt_tokens, i):
   if nt_tokens:
     for nt in list( nt_tokens ):
       #if nt.rng[0]<=i and i < nt.rng[1]: return nt
       if isInTokenRng( nt, i ): return nt
-      
+
+
 def tokenize_num( s ):
   g_nt = tokenize( s, ( ('NUM', RE_NUM), ))
   return g_nt and list(g_nt) or None
+
 
 def tokenize_str( s ):
   g_nt = tokenize( s, ( ('STR', RE_STR), ))
   return g_nt and list(g_nt) or None
 
+
 def tokenize_id( s ):
   g_nt = tokenize( s, ( ('ID', RE_ID), ))
   return g_nt and list(g_nt) or None
   
+
 def tokenize_pt( s, dim=3):
   '''
     >>> s=' pts= [[2,3,d], [w,h,k], [0,0,1] ]'
@@ -906,6 +1150,7 @@ def find1stBlk( text, name='{}', ends=("\{","\}")
              ,_iblkbegs=_iblkbegs, _ntblk=_ntblk
              )    
 
+
 def findAllBlks( text, name='{}', ends=("\{","\}")
 
               , _i=0
@@ -1007,6 +1252,7 @@ def findAllBlks( text, name='{}', ends=("\{","\}")
              ,_iblkbegs=_iblkbegs, _ntblks=_ntblks
              )    
 
+
 def findTopBlks( text, name='{}', ends=("\{","\}")
             , _i=0, _rtn=[] ):
   '''
@@ -1049,7 +1295,6 @@ def findTopBlks( text, name='{}', ends=("\{","\}")
   
   
 def find1stComplex(text, name, rules
-
                    , _i=0 
                    , _nextRule=0
                    , _rtn=[]
@@ -1229,6 +1474,7 @@ def find1stComplex(text, name, rules
                    , _rtn=_rtn
                    )                            
   
+
 def findTopComplexes( text, name, rules
             , _i=0, _rtn=[] ):
   r'''
@@ -1344,8 +1590,10 @@ def findTopComplexes( text, name, rules
 def find1stCurlyBlk(text):
   return find1stBlk(text, name='{}', ends=("\{","\}"))
 
+
 def find1stSqBlk(text):
   return find1stBlk(text, name='[]', ends=("\[", "\]"))
+
 
 def find1stRoundBlk(text):
   '''
@@ -1361,10 +1609,12 @@ def find1stRoundBlk(text):
     
   return find1stBlk(text, name='()', ends=("\(", "\)"))
   
+
 def find1stFuncCall(text):
   return find1stComplex( text, name='funcCall'
           , rules= ( RE_ID, ("\(", "\)") ) )
-                       
+
+
 def find1stModBlk(text):
   '''      
     >>> s='a=3; move([(2,3),4]){ cube(); }; '
@@ -1382,9 +1632,11 @@ def find1stModBlk(text):
   if rtn: rtn= rtn[0]
   return rtn
  
+
 def findAllLists( s ):
   return findAllBlks( s, name='[]', ends=('\[', '\]') )
   
+
 def isInTokenRng(tk,i):
   return tk.rng[0]<=i and i<tk.rng[1]  
   
@@ -1407,6 +1659,7 @@ def ntNum_at_i( s, i ):
   '''
   return token_at_i( tokenize_num( s ), i )
 
+
 def ntStr_at_i( s, i ):
   '''
              012345678901234567890
@@ -1424,6 +1677,7 @@ def ntStr_at_i( s, i ):
   '''
   return token_at_i( tokenize_str( s ), i ) 
   
+
 def ntId_at_i( s, i ):
   '''
              012345678901234567890
@@ -1442,6 +1696,7 @@ def ntId_at_i( s, i ):
         
   '''
   return token_at_i( tokenize_id( s ), i ) 
+
 
 def ntPt_at_i( s, i, dim=3 ):
   '''
@@ -1487,6 +1742,7 @@ def findPtBlk( text ):
   '''
   '''
   
+
 def re_test():
   ''' Test the re and token using doctest
   ''' 
@@ -1496,8 +1752,35 @@ def re_test():
   
   funcs = ( 
            'RE'
+          , _0m
+          , _0ms
+          , _01
+          , _1m
+          , _1ms
+          , _af 
+          , _af_fb
+          , _c
+          , _fb 
+          , _naf 
+          , _naf_fb 
+          , _naf_nfb 
+          , _nc 
+          , _nc_0m
+          , _nc_01
+          , _nc_1m 
+          , _nc_or 
+          , _nc_or_c          
           , _or_items
-          , test_re_or
+          , _nc_or_items 
+          , _nc_or_nc 
+          , _nc_rep 
+          , _nfb 
+          , _or 
+          , _or_c 
+          , _or_items 
+          , _or_nc 
+          , _rep 
+          #, test_re_or
           , _1m
           , _nc_1m
           , _rep
@@ -1543,7 +1826,12 @@ def re_test():
       print('====== %s ======'%f)
       
 if __name__=='__main__':
-    re_test()
-    #import sys
-    #print sys.version
+    #tl.off()
+    print('*** Doctesting all functions ***')
+    doctest.testmod(verbose = False)
+    print('*** Done ***')
+    #doctest.run_docstring_examples(get_rng_by_rel_rng, globals())
+    #print(tl.text())
+    #re_test()
+    print("\n\n")
     
